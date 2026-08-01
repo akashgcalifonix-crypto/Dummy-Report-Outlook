@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dummy Test Entry Tool</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; margin: 0; padding: 0; }
+        
+        /* Updated Header with Logo */
+        header { background-color: #ffffff; color: #333; padding: 15px; text-align: center; border-bottom: 4px solid #4CAF50; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .logo { max-height: 60px; margin-bottom: 10px; }
+        header h2 { margin: 0; font-size: 20px; color: #555; }
+
+        .nav-tabs { display: flex; background: #333; }
+        .nav-tabs button { flex: 1; padding: 15px; color: white; background: none; border: none; font-size: 16px; cursor: pointer; font-weight: bold;}
+        .nav-tabs button.active { background: #4CAF50; }
+        .container { padding: 20px; max-width: 900px; margin: auto; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        
+        /* Form Styles */
+        .form-group { margin-bottom: 15px; }
+        label { display: block; font-weight: bold; margin-bottom: 5px; color: #333; }
+        input, select { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 16px; }
+        button.submit-btn { width: 100%; background: #4CAF50; color: white; padding: 15px; border: none; font-size: 18px; border-radius: 4px; cursor: pointer; font-weight: bold; margin-top: 10px;}
+        
+        /* Dashboard Styles */
+        .filters { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; background: white; padding: 15px; border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);}
+        .filter-item { flex: 1 1 150px; }
+        .table-responsive { overflow-x: auto; background: white; border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        table { width: 100%; border-collapse: collapse; white-space: nowrap; font-size: 14px;}
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: #9cb4d4; color: black; position: sticky; top: 0;}
+        .pass { background-color: #c6efce; color: #006100; font-weight: bold; }
+        .fail { background-color: #ffc7ce; color: #9c0006; font-weight: bold; }
+        
+        /* Loader */
+        #loader { display: none; text-align: center; color: #4CAF50; font-weight: bold; padding: 20px; font-size: 18px;}
+    </style>
+</head>
+<body>
+
+    <header>
+        <!-- Logo added here -->
+        <img src="https://i.postimg.cc/5y7SN4xc/logo.png" alt="Company Logo" class="logo">
+        <h2>Production Dummy Test Log</h2>
+    </header>
+
+    <div class="nav-tabs">
+        <button class="tab-btn active" onclick="switchTab('entry')">Data Entry</button>
+        <button class="tab-btn" onclick="switchTab('dashboard')">Shift Dashboard</button>
+    </div>
+
+    <div class="container">
+        
+        <!-- DATA ENTRY TAB -->
+        <div id="entry" class="tab-content active">
+            <form id="dataForm">
+                <div class="form-group">
+                    <label>Date</label>
+                    <input type="date" id="date" name="date" required>
+                </div>
+                <div class="form-group">
+                    <label>Stage Name</label>
+                    <select name="stageName" required>
+                        <option value="">Select Stage...</option>
+                        <option value="FT">FT</option>
+                        <option value="CT">CT</option>
+                        <option value="BT">BT</option>
+                        <option value="LQC">LQC</option>
+                        <option value="PCBA VI">PCBA VI</option>
+                        <option value="VI">VI</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Operator Name</label>
+                    <input type="text" name="operatorName" required>
+                </div>
+                <div class="form-group">
+                    <label>Operator ID</label>
+                    <input type="text" name="operatorId">
+                </div>
+                <div class="form-group">
+                    <label>Problem Description</label>
+                    <input type="text" name="problemDescription" value="Single LED">
+                </div>
+                <div class="form-group">
+                    <label>Line No.</label>
+                    <select name="lineNo" required>
+                        <option value="">Select Line...</option>
+                        <option value="B01">B01</option>
+                        <option value="B02">B02</option>
+                        <option value="B03">B03</option>
+                        <option value="B04">B04</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Dummy Test Result</label>
+                    <select name="testResult" required>
+                        <option value="Pass">Pass</option>
+                        <option value="Fail">Fail</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Remarks</label>
+                    <input type="text" name="remark">
+                </div>
+                <button type="submit" class="submit-btn" id="submitBtn">Submit Data</button>
+            </form>
+        </div>
+
+        <!-- DASHBOARD TAB -->
+        <div id="dashboard" class="tab-content">
+            
+            <div class="filters">
+                <div class="filter-item">
+                    <label>Date</label>
+                    <input type="date" id="filterDate" onchange="applyFilters()">
+                </div>
+                <div class="filter-item">
+                    <label>Line</label>
+                    <select id="filterLine" onchange="applyFilters()">
+                        <option value="ALL">All Lines</option>
+                        <option value="B01">B01</option>
+                        <option value="B02">B02</option>
+                        <option value="B03">B03</option>
+                        <option value="B04">B04</option>
+                    </select>
+                </div>
+                <div class="filter-item">
+                    <label>Result</label>
+                    <select id="filterResult" onchange="applyFilters()">
+                        <option value="ALL">All Results</option>
+                        <option value="Pass">Pass</option>
+                        <option value="Fail">Fail</option>
+                    </select>
+                </div>
+                <div class="filter-item">
+                    <label>Stage</label>
+                    <select id="filterStage" onchange="applyFilters()">
+                        <option value="ALL">All Stages</option>
+                        <option value="FT">FT</option>
+                        <option value="CT">CT</option>
+                        <option value="BT">BT</option>
+                        <option value="LQC">LQC</option>
+                        <option value="PCBA VI">PCBA VI</option>
+                        <option value="VI">VI</option>
+                    </select>
+                </div>
+            </div>
+
+            <button onclick="loadDashboardData()" style="padding:12px; background:#1760c4; color:white; border:none; border-radius:4px; margin-bottom:15px; cursor:pointer; font-weight:bold; width:100%;">🔄 Refresh Dashboard Data</button>
+            
+            <div id="loader">Fetching data from Google Sheets...</div>
+
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Stage name</th>
+                            <th>Operator Name</th>
+                            <th>Operator ID</th>
+                            <th>Problem Description</th>
+                            <th>Line no.</th>
+                            <th>Result</th>
+                            <th>Remarks</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <!-- Data injected here via JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // =========================================================================
+        // PASTE YOUR NEW GOOGLE APPS SCRIPT URL HERE (Keep the quotation marks!)
+        // =========================================================================
+        const SCRIPT_URL = "PASTE_YOUR_COPIED_WEB_APP_URL_HERE"; 
+        
+        let allData = [];
+
+        document.getElementById('date').valueAsDate = new Date();
+        document.getElementById('filterDate').valueAsDate = new Date();
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            event.currentTarget.classList.add('active');
+
+            if(tabId === 'dashboard') {
+                loadDashboardData();
+            }
+        }
+
+        document.getElementById('dataForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            if(SCRIPT_URL === "PASTE_YOUR_COPIED_WEB_APP_URL_HERE") {
+                alert("Error: You forgot to paste your Google Script URL into the code!");
+                return;
+            }
+
+            const btn = document.getElementById('submitBtn');
+            btn.innerText = "Saving Data...";
+            btn.style.backgroundColor = "#888";
+            btn.disabled = true;
+
+            const formData = new FormData(this);
+            const data = new URLSearchParams(formData);
+
+            fetch(SCRIPT_URL, {
+                method: 'POST',
+                body: data
+            })
+            .then(res => res.json())
+            .then(response => {
+                alert("✅ Data Saved Successfully!");
+                this.reset();
+                document.getElementById('date').valueAsDate = new Date(); // keep date current
+                btn.innerText = "Submit Data";
+                btn.style.backgroundColor = "#4CAF50";
+                btn.disabled = false;
+            })
+            .catch(error => {
+                alert("✅ Data submitted! (Check your Google Sheet to confirm).");
+                this.reset();
+                document.getElementById('date').valueAsDate = new Date();
+                btn.innerText = "Submit Data";
+                btn.style.backgroundColor = "#4CAF50";
+                btn.disabled = false;
+            });
+        });
+
+        function loadDashboardData() {
+            if(SCRIPT_URL === "https://script.google.com/macros/s/AKfycbx4LRlHEgDS9661uWMA45D8O2Y8WdvsJY3_QGA7VlU38PKe1xdRfhIzqyknZJ9TI5zuLA/exec") {
+                alert("Error: You forgot to paste your Google Script URL into the code!");
+                return;
+            }
+
+            document.getElementById('loader').style.display = "block";
+            document.getElementById('tableBody').innerHTML = "";
+
+            fetch(SCRIPT_URL)
+            .then(res => res.json())
+            .then(data => {
+                allData = data; 
+                applyFilters(); 
+                document.getElementById('loader').style.display = "none";
+            })
+            .catch(err => {
+                document.getElementById('loader').innerText = "Error loading data. Check internet connection.";
+            });
+        }
+
+        function applyFilters() {
+            const dateFilter = document.getElementById('filterDate').value;
+            const lineFilter = document.getElementById('filterLine').value;
+            const resultFilter = document.getElementById('filterResult').value;
+            const stageFilter = document.getElementById('filterStage').value;
+
+            const filteredData = allData.filter(row => {
+                let match = true;
+                
+                // Note: The text in the brackets [' '] must match your Google Sheet Column Headers EXACTLY.
+                if (dateFilter && row['Date'] !== dateFilter) match = false;
+                if (lineFilter !== 'ALL' && row['Line no.'] !== lineFilter) match = false;
+                if (resultFilter !== 'ALL' && row['Dummy Test Result'] !== resultFilter) match = false;
+                if (stageFilter !== 'ALL' && row['Stage name'] !== stageFilter) match = false;
+                
+                return match;
+            });
+
+            renderTable(filteredData);
+        }
+
+        function renderTable(data) {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = "";
+
+            if(data.length === 0) {
+                tbody.innerHTML = "<tr><td colspan='8' style='text-align:center;'>No data found for this filter</td></tr>";
+                return;
+            }
+
+            data.forEach(row => {
+                const tr = document.createElement('tr');
+                const resultClass = (row['Dummy Test Result'] === 'Fail') ? 'fail' : 'pass';
+
+                // Notice fallback keys like 'Remarks' or 'Remark' just in case your sheet header changes
+                tr.innerHTML = `
+                    <td>${row['Date'] || ''}</td>
+                    <td>${row['Stage name'] || ''}</td>
+                    <td>${row['Operator Name'] || ''}</td>
+                    <td>${row['Operator ID'] || ''}</td>
+                    <td>${row['problem Description'] || row['problem Descrip'] || ''}</td>
+                    <td>${row['Line no.'] || ''}</td>
+                    <td class="${resultClass}">${row['Dummy Test Result'] || ''}</td>
+                    <td>${row['Remarks'] || row['Remark'] || ''}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+    </script>
+</body>
+</html>
