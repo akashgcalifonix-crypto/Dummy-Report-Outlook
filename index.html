@@ -31,11 +31,23 @@
         .tab-content { display: none; }
         .tab-content.active { display: block; }
         
-        /* Form */
+        /* Form Global Settings */
+        .global-settings { background: #e9ecef; padding: 15px; border-radius: 8px; border-left: 5px solid #1760c4; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);}
+        .global-settings h3 { margin-top: 0; color: #333; font-size: 16px; border-bottom: 1px solid #ccc; padding-bottom: 8px; margin-bottom: 15px;}
+        
+        /* Dynamic Entry Cards */
+        .entry-card { background: white; padding: 15px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 15px; position: relative; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .entry-card h4 { margin-top: 0; color: #1760c4; border-bottom: 1px solid #eee; padding-bottom: 8px; margin-bottom: 15px; font-size: 16px;}
+        .remove-btn { position: absolute; top: 12px; right: 15px; background: #dc3545; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; }
+        
+        /* Form Inputs */
         .form-group { margin-bottom: 15px; }
         label { display: block; margin-bottom: 5px; color: #333; font-size: 15px;}
         input, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 15px; color: #000; }
-        button.submit-btn { width: 100%; background: #4CAF50; color: white; padding: 15px; border: none; font-size: 18px; border-radius: 4px; cursor: pointer; margin-top: 10px;}
+        
+        /* Buttons */
+        .add-row-btn { background: #20c997; color: white; border: none; padding: 12px; width: 100%; font-size: 18px; border-radius: 6px; cursor: pointer; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(32,201,151,0.3);}
+        .submit-btn { width: 100%; background: #4CAF50; color: white; padding: 18px; border: none; font-size: 20px; border-radius: 6px; cursor: pointer; margin-top: 5px; box-shadow: 0 4px 6px rgba(76,175,80,0.3);}
         
         /* Dashboard Filters */
         .filters { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; background: white; padding: 15px; border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);}
@@ -93,64 +105,76 @@
         <!-- DATA ENTRY TAB -->
         <div id="entry" class="tab-content active">
             <form id="dataForm">
-                <div class="form-group" style="background: #e9ecef; padding: 10px; border-radius: 5px; border-left: 5px solid #1760c4;">
-                    <label style="color: #1760c4;">Number of Entries (Qty)</label>
-                    <input type="number" id="qty" name="qty" value="1" min="1" max="50" required>
+                
+                <!-- GLOBAL SETTINGS (Applied to all rows) -->
+                <div class="global-settings">
+                    <h3>General Details (Applies to all entries below)</h3>
+                    <div class="form-group">
+                        <label>Date</label>
+                        <input type="date" id="globalDate" required>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label>Line No.</label>
+                        <select id="globalLine" required>
+                            <option value="">Select Line...</option>
+                            <option value="B01">B01</option>
+                            <option value="B02">B02</option>
+                            <option value="B03">B03</option>
+                            <option value="B04">B04</option>
+                            <option value="B05">B05</option>
+                            <option value="B06">B06</option>
+                            <option value="B07">B07</option>
+                            <option value="B08">B08</option>
+                        </select>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label>Date</label>
-                    <input type="date" id="date" name="date" required>
+
+                <!-- DYNAMIC ROWS CONTAINER -->
+                <div id="entriesContainer">
+                    <div class="entry-card" id="row-1">
+                        <h4 class="row-title">Entry 1</h4>
+                        
+                        <div class="form-group">
+                            <label>Stage Name</label>
+                            <select class="inp-stage" required>
+                                <option value="">Select Stage...</option>
+                                <option value="FT">FT</option>
+                                <option value="CT">CT</option>
+                                <option value="BT">BT</option>
+                                <option value="LQC">LQC</option>
+                                <option value="PCBA VI">PCBA VI</option>
+                                <option value="VI">VI</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Operator Name</label>
+                            <input type="text" class="inp-operatorName" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Operator ID</label>
+                            <input type="text" class="inp-operatorId">
+                        </div>
+                        <div class="form-group">
+                            <label>Problem Description</label>
+                            <input type="text" class="inp-problem" value="Single LED">
+                        </div>
+                        <div class="form-group">
+                            <label>Dummy Test Result</label>
+                            <select class="inp-result" required>
+                                <option value="Pass">Pass</option>
+                                <option value="Fail">Fail</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Remarks</label>
+                            <input type="text" class="inp-remark">
+                        </div>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label>Stage Name</label>
-                    <select name="stageName" required>
-                        <option value="">Select Stage...</option>
-                        <option value="FT">FT</option>
-                        <option value="CT">CT</option>
-                        <option value="BT">BT</option>
-                        <option value="LQC">LQC</option>
-                        <option value="PCBA VI">PCBA VI</option>
-                        <option value="VI">VI</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Operator Name</label>
-                    <input type="text" name="operatorName" required>
-                </div>
-                <div class="form-group">
-                    <label>Operator ID</label>
-                    <input type="text" name="operatorId">
-                </div>
-                <div class="form-group">
-                    <label>Problem Description</label>
-                    <input type="text" name="problemDescription" value="Single LED">
-                </div>
-                <div class="form-group">
-                    <label>Line No.</label>
-                    <select name="lineNo" required>
-                        <option value="">Select Line...</option>
-                        <option value="B01">B01</option>
-                        <option value="B02">B02</option>
-                        <option value="B03">B03</option>
-                        <option value="B04">B04</option>
-                        <option value="B05">B05</option>
-                        <option value="B06">B06</option>
-                        <option value="B07">B07</option>
-                        <option value="B08">B08</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Dummy Test Result</label>
-                    <select name="testResult" id="testResult" required>
-                        <option value="Pass">Pass</option>
-                        <option value="Fail">Fail</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Remarks</label>
-                    <input type="text" name="remark" id="remark">
-                </div>
-                <button type="submit" class="submit-btn" id="submitBtn">Submit Data</button>
+
+                <!-- BUTTONS -->
+                <button type="button" class="add-row-btn" onclick="addNewRow()">+ Add Row</button>
+                <button type="submit" class="submit-btn" id="submitBtn">Submit All Data</button>
             </form>
         </div>
 
@@ -194,7 +218,6 @@
                 </div>
             </div>
 
-            <!-- MANAGEMENT METRICS & CHART -->
             <div id="dashboardContent" style="display: none;">
                 
                 <div class="metrics-container">
@@ -209,13 +232,9 @@
                     </div>
                 </div>
 
-                <!-- Dynamic Stage Stats -->
                 <h3 class="section-title">All Stages Fail Rate</h3>
-                <div class="stage-metrics" id="stageMetricsContainer">
-                    <!-- Cards will be injected here -->
-                </div>
+                <div class="stage-metrics" id="stageMetricsContainer"></div>
 
-                <!-- Line Wise Chart -->
                 <h3 class="section-title">Line-Wise Failures</h3>
                 <div class="chart-wrapper">
                     <canvas id="lineFailChart"></canvas>
@@ -242,9 +261,7 @@
                             <th>Remarks</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <!-- Data injected via DataTables -->
-                    </tbody>
+                    <tbody></tbody>
                 </table>
             </div>
         </div>
@@ -259,11 +276,12 @@
         
         let allData = [];
         let myChart = null; 
-        let dataTable = null; // Variable for advanced table
+        let dataTable = null; 
+        let rowCount = 1;
 
         Chart.register(ChartDataLabels);
 
-        document.getElementById('date').valueAsDate = new Date();
+        document.getElementById('globalDate').valueAsDate = new Date();
         document.getElementById('fromDate').valueAsDate = new Date();
         document.getElementById('toDate').valueAsDate = new Date();
 
@@ -278,7 +296,56 @@
             }
         }
 
-        // Form Submission
+        // --- NEW: Add Dynamic Row Logic ---
+        function addNewRow() {
+            rowCount++;
+            const container = document.getElementById('entriesContainer');
+            const rows = container.querySelectorAll('.entry-card');
+            const lastRow = rows[rows.length - 1];
+            
+            // Clone the last row
+            const newRow = lastRow.cloneNode(true);
+            newRow.id = `row-${rowCount}`;
+            
+            // Update the title
+            newRow.querySelector('.row-title').innerText = `Entry ${rowCount}`;
+            
+            // Add Remove Button if it doesn't exist
+            if (!newRow.querySelector('.remove-btn')) {
+                const removeBtn = document.createElement('button');
+                removeBtn.type = 'button';
+                removeBtn.className = 'remove-btn';
+                removeBtn.innerText = 'X Remove';
+                removeBtn.onclick = function() { 
+                    this.parentElement.remove(); 
+                    updateRowTitles(); 
+                };
+                newRow.insertBefore(removeBtn, newRow.firstChild);
+            } else {
+                // Ensure the cloned remove button works
+                newRow.querySelector('.remove-btn').onclick = function() { 
+                    this.parentElement.remove(); 
+                    updateRowTitles(); 
+                };
+            }
+            
+            // Reset specific fields for the new entry, but keep Stage & Operator Name to save time
+            newRow.querySelector('.inp-remark').value = '';
+            newRow.querySelector('.inp-result').value = 'Pass';
+            
+            container.appendChild(newRow);
+        }
+
+        // Re-number rows if one is deleted from the middle
+        function updateRowTitles() {
+            const rows = document.querySelectorAll('.entry-card');
+            rowCount = rows.length;
+            rows.forEach((row, index) => {
+                row.querySelector('.row-title').innerText = `Entry ${index + 1}`;
+            });
+        }
+
+        // --- NEW: Multiple Submission Logic ---
         document.getElementById('dataForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             if(SCRIPT_URL === "PASTE_YOUR_COPIED_WEB_APP_URL_HERE") {
@@ -287,41 +354,60 @@
             }
             
             const btn = document.getElementById('submitBtn');
-            const qtyInput = document.getElementById('qty');
-            let qty = parseInt(qtyInput.value);
-            if(isNaN(qty) || qty < 1) qty = 1;
+            const globalDate = document.getElementById('globalDate').value;
+            const globalLine = document.getElementById('globalLine').value;
+            const rows = document.querySelectorAll('.entry-card');
+            const totalRows = rows.length;
 
             btn.style.backgroundColor = "#888";
             btn.disabled = true;
 
-            const formData = new FormData(this);
-            const data = new URLSearchParams(formData);
-
             try {
-                for(let i = 0; i < qty; i++) {
-                    btn.innerText = `Saving Entry ${i + 1} of ${qty}...`;
+                // Loop through every single row and send it to Google
+                for(let i = 0; i < totalRows; i++) {
+                    const row = rows[i];
+                    btn.innerText = `Saving Entry ${i + 1} of ${totalRows}...`;
+                    
+                    const data = new URLSearchParams();
+                    data.append('date', globalDate);
+                    data.append('lineNo', globalLine);
+                    data.append('stageName', row.querySelector('.inp-stage').value);
+                    data.append('operatorName', row.querySelector('.inp-operatorName').value);
+                    data.append('operatorId', row.querySelector('.inp-operatorId').value);
+                    data.append('problemDescription', row.querySelector('.inp-problem').value);
+                    data.append('testResult', row.querySelector('.inp-result').value);
+                    data.append('remark', row.querySelector('.inp-remark').value);
+                    
                     await fetch(SCRIPT_URL, { method: 'POST', body: data });
                 }
 
-                alert(`✅ Successfully saved ${qty} entr${qty > 1 ? 'ies' : 'y'}!`);
+                alert(`✅ Successfully saved ${totalRows} entr${totalRows > 1 ? 'ies' : 'y'}!`);
                 
-                qtyInput.value = 1;
-                document.getElementById('remark').value = "";
-                document.getElementById('testResult').value = "Pass";
+                // Reset the form: Remove all rows except the first one
+                const container = document.getElementById('entriesContainer');
+                while(container.children.length > 1) {
+                    container.removeChild(container.lastChild);
+                }
+                rowCount = 1;
                 
-                btn.innerText = "Submit Data";
+                // Clear the first row's remarks
+                const firstRow = document.querySelector('.entry-card');
+                firstRow.querySelector('.inp-remark').value = "";
+                firstRow.querySelector('.inp-result').value = "Pass";
+                
+                btn.innerText = "Submit All Data";
                 btn.style.backgroundColor = "#4CAF50";
                 btn.disabled = false;
 
             } catch (error) {
                 alert("⚠️ Error connecting to server. Please try again.");
-                btn.innerText = "Submit Data";
+                btn.innerText = "Submit All Data";
                 btn.style.backgroundColor = "#4CAF50";
                 btn.disabled = false;
             }
         });
 
-        // Load Data
+        // Dashboard Data Loading
         function loadDashboardData() {
             if(SCRIPT_URL === "PASTE_YOUR_COPIED_WEB_APP_URL_HERE") return;
 
@@ -479,12 +565,10 @@
 
         // Render DataTables
         function renderTable(data) {
-            // Format array for DataTables format
             const formattedData = data.map(row => {
                 let resultText = String(row['Dummy Test Result'] || '').trim().toUpperCase();
                 let resultHtml = resultText;
                 
-                // Add pretty colored labels for Pass/Fail
                 if(resultText === 'FAIL') resultHtml = `<span class="fail-cell">${resultText}</span>`;
                 if(resultText === 'PASS') resultHtml = `<span class="pass-cell">${resultText}</span>`;
 
@@ -500,7 +584,6 @@
                 ];
             });
 
-            // Initialize or Reload DataTable
             if (dataTable !== null) {
                 dataTable.clear();
                 dataTable.rows.add(formattedData);
@@ -510,10 +593,8 @@
                     data: formattedData,
                     pageLength: 10,
                     lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
-                    order: [[0, "desc"]], // Default sort by Date (Newest first)
-                    language: {
-                        search: "Search Table: "
-                    }
+                    order: [[0, "desc"]],
+                    language: { search: "Search Table: " }
                 });
             }
         }
