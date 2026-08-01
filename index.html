@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dummy Test Entry Tool</title>
+    <title>Production Dummy Test Dashboard</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; margin: 0; padding: 0; }
         
@@ -14,21 +14,35 @@
         .nav-tabs { display: flex; background: #333; }
         .nav-tabs button { flex: 1; padding: 15px; color: white; background: none; border: none; font-size: 16px; cursor: pointer; font-weight: bold;}
         .nav-tabs button.active { background: #4CAF50; }
-        .container { padding: 20px; max-width: 900px; margin: auto; }
+        .container { padding: 20px; max-width: 1000px; margin: auto; }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
         
+        /* Form */
         .form-group { margin-bottom: 15px; }
-        label { display: block; font-weight: bold; margin-bottom: 5px; color: #333; }
-        input, select { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 16px; }
+        label { display: block; font-weight: bold; margin-bottom: 5px; color: #333; font-size: 14px;}
+        input, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 15px; }
         button.submit-btn { width: 100%; background: #4CAF50; color: white; padding: 15px; border: none; font-size: 18px; border-radius: 4px; cursor: pointer; font-weight: bold; margin-top: 10px;}
         
+        /* Dashboard Filters */
         .filters { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; background: white; padding: 15px; border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);}
-        .filter-item { flex: 1 1 150px; }
-        .table-responsive { overflow-x: auto; background: white; border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        table { width: 100%; border-collapse: collapse; white-space: nowrap; font-size: 14px;}
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
-        th { background-color: #9cb4d4; color: black; position: sticky; top: 0;}
+        .filter-item { flex: 1 1 140px; }
+        
+        /* Management Cards */
+        .metrics-container { display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 20px; }
+        .metric-card { flex: 1 1 200px; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); text-align: center; border-top: 5px solid #1760c4; }
+        .metric-card.alert-card { border-top: 5px solid #d9534f; }
+        .metric-card h3 { margin: 0 0 10px 0; font-size: 15px; color: #555; text-transform: uppercase; border-bottom: 1px solid #eee; padding-bottom: 8px;}
+        .metric-card p { margin: 5px 0; font-size: 15px; font-weight: bold; color: #333;}
+        .text-pass { color: #28a745; }
+        .text-fail { color: #d9534f; }
+        .text-rate { color: #e67e22; font-size: 18px !important; }
+
+        /* Table */
+        .table-responsive { overflow-x: auto; background: white; border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); max-height: 500px; overflow-y: auto;}
+        table { width: 100%; border-collapse: collapse; white-space: nowrap; font-size: 13px;}
+        th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: #9cb4d4; color: black; position: sticky; top: 0; z-index: 10;}
         .pass { background-color: #c6efce; color: #006100; font-weight: bold; }
         .fail { background-color: #ffc7ce; color: #9c0006; font-weight: bold; }
         
@@ -44,7 +58,7 @@
 
     <div class="nav-tabs">
         <button class="tab-btn active" onclick="switchTab('entry')">Data Entry</button>
-        <button class="tab-btn" onclick="switchTab('dashboard')">Shift Dashboard</button>
+        <button class="tab-btn" onclick="switchTab('dashboard')">Management Dashboard</button>
     </div>
 
     <div class="container">
@@ -110,8 +124,12 @@
             
             <div class="filters">
                 <div class="filter-item">
-                    <label>Date</label>
-                    <input type="date" id="filterDate" onchange="applyFilters()">
+                    <label>From Date</label>
+                    <input type="date" id="fromDate" onchange="applyFilters()">
+                </div>
+                <div class="filter-item">
+                    <label>To Date</label>
+                    <input type="date" id="toDate" onchange="applyFilters()">
                 </div>
                 <div class="filter-item">
                     <label>Line</label>
@@ -121,14 +139,6 @@
                         <option value="B02">B02</option>
                         <option value="B03">B03</option>
                         <option value="B04">B04</option>
-                    </select>
-                </div>
-                <div class="filter-item">
-                    <label>Result</label>
-                    <select id="filterResult" onchange="applyFilters()">
-                        <option value="ALL">All Results</option>
-                        <option value="Pass">Pass</option>
-                        <option value="Fail">Fail</option>
                     </select>
                 </div>
                 <div class="filter-item">
@@ -145,7 +155,24 @@
                 </div>
             </div>
 
-            <button onclick="loadDashboardData()" style="padding:12px; background:#1760c4; color:white; border:none; border-radius:4px; margin-bottom:15px; cursor:pointer; font-weight:bold; width:100%;">🔄 Refresh Dashboard Data</button>
+            <!-- MANAGEMENT METRICS -->
+            <div class="metrics-container" id="metricsContainer" style="display: none;">
+                <div class="metric-card">
+                    <h3>Overall Dummy Status</h3>
+                    <p>Total Tests: <span id="m-total">0</span></p>
+                    <p class="text-pass">Pass: <span id="m-pass">0</span></p>
+                    <p class="text-fail">Fail: <span id="m-fail">0</span></p>
+                    <p class="text-rate">Fail Rate: <span id="m-failrate">0.0%</span></p>
+                </div>
+                <div class="metric-card alert-card">
+                    <h3>FT Stage Analysis</h3>
+                    <p>FT Total Tests: <span id="m-ft-total">0</span></p>
+                    <p class="text-fail">FT Failures: <span id="m-ft-fail">0</span></p>
+                    <p class="text-rate">FT Fail Rate: <span id="m-ft-failrate">0.0%</span></p>
+                </div>
+            </div>
+
+            <button onclick="loadDashboardData()" style="padding:12px; background:#333; color:white; border:none; border-radius:4px; margin-bottom:15px; cursor:pointer; font-weight:bold; width:100%;">🔄 Fetch / Refresh Data</button>
             
             <div id="loader">Fetching data from Google Sheets...</div>
 
@@ -164,7 +191,7 @@
                         </tr>
                     </thead>
                     <tbody id="tableBody">
-                        <!-- Data injected here via JS -->
+                        <!-- Data injected here -->
                     </tbody>
                 </table>
             </div>
@@ -180,9 +207,10 @@
         
         let allData = [];
 
-        // Set default dates
+        // Set default dates to Today
         document.getElementById('date').valueAsDate = new Date();
-        document.getElementById('filterDate').valueAsDate = new Date();
+        document.getElementById('fromDate').valueAsDate = new Date();
+        document.getElementById('toDate').valueAsDate = new Date();
 
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
@@ -235,19 +263,19 @@
             if(SCRIPT_URL === "PASTE_YOUR_COPIED_WEB_APP_URL_HERE") return;
 
             document.getElementById('loader').style.display = "block";
+            document.getElementById('metricsContainer').style.display = "none";
             document.getElementById('tableBody').innerHTML = "";
 
             fetch(SCRIPT_URL)
             .then(res => res.json())
             .then(data => {
-                // THIS IS THE SMART FIX: It cleans up any weird formatting from Google Sheets
                 allData = data.map(oldRow => {
                     let newRow = {};
                     for (let key in oldRow) {
-                        let cleanKey = key.trim(); // Removes accidental spaces in headers
+                        let cleanKey = key.trim(); 
                         let value = oldRow[key];
                         
-                        // Forces date into exact YYYY-MM-DD format for the filter
+                        // Force Date Formatting
                         if (cleanKey.toLowerCase() === 'date' && value) {
                             let d = new Date(value);
                             if (!isNaN(d)) {
@@ -264,6 +292,7 @@
                 
                 applyFilters(); 
                 document.getElementById('loader').style.display = "none";
+                document.getElementById('metricsContainer').style.display = "flex";
             })
             .catch(err => {
                 document.getElementById('loader').innerText = "Error loading data. Check internet connection.";
@@ -271,23 +300,62 @@
         }
 
         function applyFilters() {
-            const dateFilter = document.getElementById('filterDate').value;
+            const fromDate = document.getElementById('fromDate').value;
+            const toDate = document.getElementById('toDate').value;
             const lineFilter = document.getElementById('filterLine').value;
-            const resultFilter = document.getElementById('filterResult').value;
             const stageFilter = document.getElementById('filterStage').value;
 
             const filteredData = allData.filter(row => {
                 let match = true;
                 
-                if (dateFilter && row['Date'] !== dateFilter) match = false;
+                // Date Range Logic
+                if (row['Date']) {
+                    if (fromDate && row['Date'] < fromDate) match = false;
+                    if (toDate && row['Date'] > toDate) match = false;
+                } else if (fromDate || toDate) {
+                    match = false; // Exclude empty dates if a filter is on
+                }
+
                 if (lineFilter !== 'ALL' && row['Line no.'] !== lineFilter) match = false;
-                if (resultFilter !== 'ALL' && row['Dummy Test Result'] !== resultFilter) match = false;
                 if (stageFilter !== 'ALL' && row['Stage name'] !== stageFilter) match = false;
                 
                 return match;
             });
 
             renderTable(filteredData);
+            calculateMetrics(filteredData);
+        }
+
+        function calculateMetrics(data) {
+            let total = data.length;
+            let pass = 0, fail = 0;
+            let ftTotal = 0, ftFail = 0;
+
+            data.forEach(row => {
+                let isFail = (row['Dummy Test Result'] === 'Fail' || row['Dummy Test Result'] === 'FAIL');
+                let isPass = (row['Dummy Test Result'] === 'Pass' || row['Dummy Test Result'] === 'PASS');
+                let isFT = (row['Stage name'] === 'FT');
+
+                if (isPass) pass++;
+                if (isFail) fail++;
+
+                if (isFT) {
+                    ftTotal++;
+                    if (isFail) ftFail++;
+                }
+            });
+
+            let overallFailRate = total > 0 ? ((fail / total) * 100).toFixed(1) : 0.0;
+            let ftFailRate = ftTotal > 0 ? ((ftFail / ftTotal) * 100).toFixed(1) : 0.0;
+
+            document.getElementById('m-total').innerText = total;
+            document.getElementById('m-pass').innerText = pass;
+            document.getElementById('m-fail').innerText = fail;
+            document.getElementById('m-failrate').innerText = overallFailRate + '%';
+
+            document.getElementById('m-ft-total').innerText = ftTotal;
+            document.getElementById('m-ft-fail').innerText = ftFail;
+            document.getElementById('m-ft-failrate').innerText = ftFailRate + '%';
         }
 
         function renderTable(data) {
@@ -295,21 +363,21 @@
             tbody.innerHTML = "";
 
             if(data.length === 0) {
-                tbody.innerHTML = "<tr><td colspan='8' style='text-align:center;'>No data found for this filter</td></tr>";
+                tbody.innerHTML = "<tr><td colspan='8' style='text-align:center;'>No data found for this date range/filter</td></tr>";
                 return;
             }
 
             data.forEach(row => {
                 const tr = document.createElement('tr');
-                const resultClass = (row['Dummy Test Result'] === 'Fail') ? 'fail' : 'pass';
+                const resultClass = (row['Dummy Test Result'] === 'Fail' || row['Dummy Test Result'] === 'FAIL') ? 'fail' : 'pass';
 
-                // Notice I added multiple fallbacks for 'Problem Descrip' to match your image exactly
+                // Fixed the exact case for 'problem Descrip'
                 tr.innerHTML = `
                     <td>${row['Date'] || ''}</td>
                     <td>${row['Stage name'] || ''}</td>
                     <td>${row['Operator Name'] || ''}</td>
                     <td>${row['Operator ID'] || ''}</td>
-                    <td>${row['Problem Descrip'] || row['problem Description'] || ''}</td>
+                    <td>${row['problem Descrip'] || row['problem Description'] || row['Problem Description'] || ''}</td>
                     <td>${row['Line no.'] || ''}</td>
                     <td class="${resultClass}">${row['Dummy Test Result'] || ''}</td>
                     <td>${row['Remarks'] || row['Remark'] || ''}</td>
