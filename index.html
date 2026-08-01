@@ -4,17 +4,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Production Dummy Test Dashboard</title>
-    <!-- Include Chart.js for the graph -->
+    
+    <!-- Include Chart.js and Data Labels Plugin for the graph -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    
     <style>
+        /* Force ALL fonts in the tool to be Bold */
+        * { font-weight: bold !important; }
+        
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; margin: 0; padding: 0; }
         
         header { background-color: #ffffff; color: #333; padding: 15px; text-align: center; border-bottom: 4px solid #4CAF50; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .logo { max-height: 60px; margin-bottom: 10px; }
-        header h2 { margin: 0; font-size: 20px; color: #555; }
+        header h2 { margin: 0; font-size: 22px; color: #555; }
 
         .nav-tabs { display: flex; background: #333; }
-        .nav-tabs button { flex: 1; padding: 15px; color: white; background: none; border: none; font-size: 16px; cursor: pointer; font-weight: bold;}
+        .nav-tabs button { flex: 1; padding: 15px; color: white; background: none; border: none; font-size: 16px; cursor: pointer; }
         .nav-tabs button.active { background: #4CAF50; }
         .container { padding: 20px; max-width: 1000px; margin: auto; }
         .tab-content { display: none; }
@@ -22,9 +28,9 @@
         
         /* Form */
         .form-group { margin-bottom: 15px; }
-        label { display: block; font-weight: bold; margin-bottom: 5px; color: #333; font-size: 14px;}
-        input, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 15px; }
-        button.submit-btn { width: 100%; background: #4CAF50; color: white; padding: 15px; border: none; font-size: 18px; border-radius: 4px; cursor: pointer; font-weight: bold; margin-top: 10px;}
+        label { display: block; margin-bottom: 5px; color: #333; font-size: 15px;}
+        input, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 15px; color: #000; }
+        button.submit-btn { width: 100%; background: #4CAF50; color: white; padding: 15px; border: none; font-size: 18px; border-radius: 4px; cursor: pointer; margin-top: 10px;}
         
         /* Dashboard Filters */
         .filters { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; background: white; padding: 15px; border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);}
@@ -33,34 +39,34 @@
         /* Overall Metric Card */
         .metrics-container { display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 20px; }
         .metric-card { flex: 1 1 100%; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); text-align: center; border-top: 5px solid #1760c4; }
-        .metric-card h3 { margin: 0 0 10px 0; font-size: 18px; color: #555; text-transform: uppercase; border-bottom: 1px solid #eee; padding-bottom: 8px;}
+        .metric-card h3 { margin: 0 0 10px 0; font-size: 18px; color: #555; text-transform: uppercase; border-bottom: 2px solid #eee; padding-bottom: 8px;}
         
         .overall-stats { display: flex; justify-content: space-around; flex-wrap: wrap; gap: 10px;}
-        .overall-stats div p { margin: 5px 0; font-size: 16px; font-weight: bold; color: #333;}
+        .overall-stats div p { margin: 5px 0; font-size: 17px; color: #333;}
         
         /* Dynamic Stage Cards */
-        .section-title { font-size: 16px; color: #555; margin-bottom: 10px; border-bottom: 2px solid #ccc; padding-bottom: 5px; text-transform: uppercase;}
+        .section-title { font-size: 18px; color: #555; margin-bottom: 10px; border-bottom: 2px solid #ccc; padding-bottom: 5px; text-transform: uppercase;}
         .stage-metrics { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 25px;}
-        .stage-card { flex: 1 1 120px; background: white; padding: 10px; border-radius: 5px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); text-align: center; border-left: 4px solid #e67e22;}
-        .stage-card h4 { margin: 0 0 8px 0; font-size: 15px; color: #333;}
-        .stage-card p { margin: 3px 0; font-size: 13px; font-weight: bold;}
+        .stage-card { flex: 1 1 120px; background: white; padding: 10px; border-radius: 5px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); text-align: center; border-left: 5px solid #e67e22;}
+        .stage-card h4 { margin: 0 0 8px 0; font-size: 16px; color: #333;}
+        .stage-card p { margin: 3px 0; font-size: 14px; }
 
         /* Chart Container */
-        .chart-wrapper { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px; height: 300px;}
+        .chart-wrapper { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px; height: 320px;}
 
-        .text-pass { color: #28a745; }
-        .text-fail { color: #d9534f; }
-        .text-rate { color: #e67e22; font-size: 16px !important; }
+        .text-pass { color: #28a745 !important; }
+        .text-fail { color: #d9534f !important; }
+        .text-rate { color: #e67e22 !important; font-size: 18px !important; }
 
         /* Table */
         .table-responsive { overflow-x: auto; background: white; border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); max-height: 400px; overflow-y: auto;}
-        table { width: 100%; border-collapse: collapse; white-space: nowrap; font-size: 13px;}
-        th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #ddd; }
-        th { background-color: #9cb4d4; color: black; position: sticky; top: 0; z-index: 10;}
-        .pass { background-color: #c6efce; color: #006100; font-weight: bold; }
-        .fail { background-color: #ffc7ce; color: #9c0006; font-weight: bold; }
+        table { width: 100%; border-collapse: collapse; white-space: nowrap; font-size: 14px;}
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: #9cb4d4; color: #000; position: sticky; top: 0; z-index: 10;}
+        .pass { background-color: #c6efce; color: #006100 !important; }
+        .fail { background-color: #ffc7ce; color: #9c0006 !important; }
         
-        #loader { display: none; text-align: center; color: #4CAF50; font-weight: bold; padding: 20px; font-size: 18px;}
+        #loader { display: none; text-align: center; color: #4CAF50; padding: 20px; font-size: 18px;}
     </style>
 </head>
 <body>
@@ -206,7 +212,7 @@
 
             </div>
 
-            <button onclick="loadDashboardData()" style="padding:12px; background:#333; color:white; border:none; border-radius:4px; margin-bottom:15px; cursor:pointer; font-weight:bold; width:100%;">🔄 Fetch / Refresh Data</button>
+            <button onclick="loadDashboardData()" style="padding:12px; background:#333; color:white; border:none; border-radius:4px; margin-bottom:15px; cursor:pointer; width:100%;">🔄 Fetch / Refresh Data</button>
             
             <div id="loader">Fetching data from Google Sheets...</div>
 
@@ -240,7 +246,10 @@
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbygVSe2u-q65y81iSXaecIAiar2xm_5xNh1rCLawfkX_wmIjMEz5k6-FgaETf28hbOYxw/exec"; 
         
         let allData = [];
-        let myChart = null; // Variable to hold the chart instance
+        let myChart = null; 
+
+        // Register the DataLabels plugin for Chart.js globally
+        Chart.register(ChartDataLabels);
 
         // Set default dates to Today
         document.getElementById('date').valueAsDate = new Date();
@@ -357,7 +366,7 @@
             let pass = 0, fail = 0;
             
             let stageStats = {};
-            let lineFails = {}; // For the chart
+            let lineFails = {}; 
 
             data.forEach(row => {
                 let resultText = String(row['Dummy Test Result'] || '').trim().toUpperCase();
@@ -367,32 +376,27 @@
                 let isFail = (resultText === 'FAIL');
                 let isPass = (resultText === 'PASS');
 
-                // Overall calculations
                 if (isPass) pass++;
                 if (isFail) fail++;
 
-                // Stage-wise calculations
                 if (stageText !== '') {
                     if (!stageStats[stageText]) stageStats[stageText] = { total: 0, fail: 0 };
                     stageStats[stageText].total++;
                     if (isFail) stageStats[stageText].fail++;
                 }
 
-                // Line-wise calculation (Fails only)
                 if (lineText !== '' && isFail) {
                     if (!lineFails[lineText]) lineFails[lineText] = 0;
                     lineFails[lineText]++;
                 }
             });
 
-            // Update Overall Text
             let overallFailRate = total > 0 ? ((fail / total) * 100).toFixed(1) : 0.0;
             document.getElementById('m-total').innerText = total;
             document.getElementById('m-pass').innerText = pass;
             document.getElementById('m-fail').innerText = fail;
             document.getElementById('m-failrate').innerText = overallFailRate + '%';
 
-            // Generate Stage Cards Dynamically
             let stageContainer = document.getElementById('stageMetricsContainer');
             stageContainer.innerHTML = ''; 
 
@@ -415,44 +419,63 @@
                 }
             }
 
-            // Render Chart
             renderChart(lineFails);
         }
 
         function renderChart(lineFails) {
-            // Sort lines alphabetically (B01, B02, etc.)
             let labels = Object.keys(lineFails).sort(); 
             let chartData = labels.map(label => lineFails[label]);
 
             const ctx = document.getElementById('lineFailChart').getContext('2d');
             
-            // Destroy existing chart to prevent hover glitches when changing filters
             if (myChart != null) {
                 myChart.destroy();
             }
 
             myChart = new Chart(ctx, {
-                type: 'bar', // Bar chart is best for category comparison
+                type: 'bar',
                 data: {
                     labels: labels,
                     datasets: [{
                         label: 'Total Fails per Line',
                         data: chartData,
-                        backgroundColor: 'rgba(217, 83, 79, 0.7)', // red
+                        backgroundColor: 'rgba(217, 83, 79, 0.85)',
                         borderColor: 'rgba(217, 83, 79, 1)',
-                        borderWidth: 1
+                        borderWidth: 1,
+                        borderRadius: 3
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: { display: false } // Hide legend since title is clear
+                        legend: { display: false },
+                        // Data labels Configuration
+                        datalabels: {
+                            anchor: 'end',
+                            align: 'top',
+                            color: '#d9534f', // Red matching the bars
+                            font: {
+                                weight: 'bold',
+                                size: 14
+                            },
+                            formatter: function(value) {
+                                return value > 0 ? value : ''; // Only show labels if value > 0
+                            }
+                        }
                     },
                     scales: {
                         y: { 
-                            beginAtZero: true, 
-                            ticks: { stepSize: 1 } // Only show whole numbers (you can't have 1.5 fails)
+                            beginAtZero: true,
+                            // Adding a little extra padding at the top so labels don't get cut off
+                            grace: '10%',
+                            ticks: { 
+                                stepSize: 1,
+                                font: { weight: 'bold' }
+                            }
+                        },
+                        x: {
+                            ticks: { font: { weight: 'bold' } }
                         }
                     }
                 }
