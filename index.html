@@ -5,12 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Production Dummy Test Dashboard</title>
     
-    <!-- Include Chart.js and Data Labels Plugin for the graph -->
+    <!-- Chart.js for Graphs -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     
+    <!-- jQuery and DataTables for Advanced Table Features -->
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    
     <style>
-        /* Force ALL fonts in the tool to be Bold */
+        /* Force ALL fonts to be Bold */
         * { font-weight: bold !important; }
         
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; margin: 0; padding: 0; }
@@ -22,7 +27,7 @@
         .nav-tabs { display: flex; background: #333; }
         .nav-tabs button { flex: 1; padding: 15px; color: white; background: none; border: none; font-size: 16px; cursor: pointer; }
         .nav-tabs button.active { background: #4CAF50; }
-        .container { padding: 20px; max-width: 1000px; margin: auto; }
+        .container { padding: 20px; max-width: 1100px; margin: auto; }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
         
@@ -58,13 +63,15 @@
         .text-fail { color: #d9534f !important; }
         .text-rate { color: #e67e22 !important; font-size: 18px !important; }
 
-        /* Table */
-        .table-responsive { overflow-x: auto; background: white; border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); max-height: 400px; overflow-y: auto;}
-        table { width: 100%; border-collapse: collapse; white-space: nowrap; font-size: 14px;}
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
-        th { background-color: #9cb4d4; color: #000; position: sticky; top: 0; z-index: 10;}
-        .pass { background-color: #c6efce; color: #006100 !important; }
-        .fail { background-color: #ffc7ce; color: #9c0006 !important; }
+        /* Advanced Table Overrides */
+        .table-responsive { background: white; border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); padding: 15px; margin-top: 20px;}
+        table.dataTable thead th { background-color: #9cb4d4; color: #000; border-bottom: none;}
+        table.dataTable tbody td { padding: 10px; border-bottom: 1px solid #ddd; font-size: 14px;}
+        .dataTables_wrapper .dataTables_filter input { border: 1px solid #ccc; border-radius: 4px; padding: 5px; margin-left: 5px;}
+        .dataTables_wrapper .dataTables_length select { border: 1px solid #ccc; border-radius: 4px; padding: 5px;}
+        
+        .pass-cell { background-color: #c6efce; color: #006100 !important; display: block; padding: 5px; text-align: center; border-radius: 3px;}
+        .fail-cell { background-color: #ffc7ce; color: #9c0006 !important; display: block; padding: 5px; text-align: center; border-radius: 3px;}
         
         #loader { display: none; text-align: center; color: #4CAF50; padding: 20px; font-size: 18px;}
     </style>
@@ -86,13 +93,10 @@
         <!-- DATA ENTRY TAB -->
         <div id="entry" class="tab-content active">
             <form id="dataForm">
-                
-                <!-- NEW BULK ENTRY FIELD -->
                 <div class="form-group" style="background: #e9ecef; padding: 10px; border-radius: 5px; border-left: 5px solid #1760c4;">
                     <label style="color: #1760c4;">Number of Entries (Qty)</label>
                     <input type="number" id="qty" name="qty" value="1" min="1" max="50" required>
                 </div>
-
                 <div class="form-group">
                     <label>Date</label>
                     <input type="date" id="date" name="date" required>
@@ -223,8 +227,9 @@
             
             <div id="loader">Fetching data from Google Sheets...</div>
 
+            <!-- ADVANCED DATA TABLE -->
             <div class="table-responsive">
-                <table>
+                <table id="myDataTable" class="display" style="width:100%">
                     <thead>
                         <tr>
                             <th>Date</th>
@@ -237,8 +242,8 @@
                             <th>Remarks</th>
                         </tr>
                     </thead>
-                    <tbody id="tableBody">
-                        <!-- Data injected here -->
+                    <tbody>
+                        <!-- Data injected via DataTables -->
                     </tbody>
                 </table>
             </div>
@@ -254,11 +259,10 @@
         
         let allData = [];
         let myChart = null; 
+        let dataTable = null; // Variable for advanced table
 
-        // Register the DataLabels plugin for Chart.js globally
         Chart.register(ChartDataLabels);
 
-        // Set default dates to Today
         document.getElementById('date').valueAsDate = new Date();
         document.getElementById('fromDate').valueAsDate = new Date();
         document.getElementById('toDate').valueAsDate = new Date();
@@ -274,9 +278,7 @@
             }
         }
 
-        // ==========================================
-        // UPDATED SUBMISSION LOGIC (BULK ENTRY LOOP)
-        // ==========================================
+        // Form Submission
         document.getElementById('dataForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             if(SCRIPT_URL === "PASTE_YOUR_COPIED_WEB_APP_URL_HERE") {
@@ -287,8 +289,6 @@
             const btn = document.getElementById('submitBtn');
             const qtyInput = document.getElementById('qty');
             let qty = parseInt(qtyInput.value);
-            
-            // Safety check
             if(isNaN(qty) || qty < 1) qty = 1;
 
             btn.style.backgroundColor = "#888";
@@ -298,7 +298,6 @@
             const data = new URLSearchParams(formData);
 
             try {
-                // Loop and send data multiple times if Quantity > 1
                 for(let i = 0; i < qty; i++) {
                     btn.innerText = `Saving Entry ${i + 1} of ${qty}...`;
                     await fetch(SCRIPT_URL, { method: 'POST', body: data });
@@ -306,8 +305,6 @@
 
                 alert(`✅ Successfully saved ${qty} entr${qty > 1 ? 'ies' : 'y'}!`);
                 
-                // SMART RESET: Do NOT wipe Date, Stage, Line, Operator. 
-                // Only wipe Remarks, Result, and reset Qty back to 1.
                 qtyInput.value = 1;
                 document.getElementById('remark').value = "";
                 document.getElementById('testResult').value = "Pass";
@@ -324,12 +321,12 @@
             }
         });
 
+        // Load Data
         function loadDashboardData() {
             if(SCRIPT_URL === "PASTE_YOUR_COPIED_WEB_APP_URL_HERE") return;
 
             document.getElementById('loader').style.display = "block";
             document.getElementById('dashboardContent').style.display = "none";
-            document.getElementById('tableBody').innerHTML = "";
 
             fetch(SCRIPT_URL)
             .then(res => res.json())
@@ -361,6 +358,7 @@
             });
         }
 
+        // Apply filters
         function applyFilters() {
             const fromDate = document.getElementById('fromDate').value;
             const toDate = document.getElementById('toDate').value;
@@ -387,7 +385,6 @@
         function calculateMetrics(data) {
             let total = data.length;
             let pass = 0, fail = 0;
-            
             let stageStats = {};
             let lineFails = {}; 
 
@@ -395,7 +392,6 @@
                 let resultText = String(row['Dummy Test Result'] || '').trim().toUpperCase();
                 let stageText = String(row['Stage name'] || '').trim().toUpperCase();
                 let lineText = String(row['Line no.'] || '').trim().toUpperCase();
-
                 let isFail = (resultText === 'FAIL');
                 let isPass = (resultText === 'PASS');
 
@@ -422,15 +418,13 @@
 
             let stageContainer = document.getElementById('stageMetricsContainer');
             stageContainer.innerHTML = ''; 
-
             if (Object.keys(stageStats).length === 0) {
-                stageContainer.innerHTML = '<p style="color:#777; width:100%; text-align:center;">No stage data available for this filter.</p>';
+                stageContainer.innerHTML = '<p style="color:#777; width:100%; text-align:center;">No stage data available.</p>';
             } else {
                 for (let stage in stageStats) {
                     let sTotal = stageStats[stage].total;
                     let sFail = stageStats[stage].fail;
                     let sRate = sTotal > 0 ? ((sFail / sTotal) * 100).toFixed(1) : 0.0;
-                    
                     stageContainer.innerHTML += `
                         <div class="stage-card">
                             <h4>${stage}</h4>
@@ -441,20 +435,14 @@
                     `;
                 }
             }
-
             renderChart(lineFails);
         }
 
         function renderChart(lineFails) {
             let labels = Object.keys(lineFails).sort(); 
             let chartData = labels.map(label => lineFails[label]);
-
             const ctx = document.getElementById('lineFailChart').getContext('2d');
-            
-            if (myChart != null) {
-                myChart.destroy();
-            }
-
+            if (myChart != null) myChart.destroy();
             myChart = new Chart(ctx, {
                 type: 'bar',
                 data: {
@@ -477,58 +465,57 @@
                             anchor: 'end',
                             align: 'top',
                             color: '#d9534f',
-                            font: {
-                                weight: 'bold',
-                                size: 14
-                            },
-                            formatter: function(value) {
-                                return value > 0 ? value : '';
-                            }
+                            font: { weight: 'bold', size: 14 },
+                            formatter: function(value) { return value > 0 ? value : ''; }
                         }
                     },
                     scales: {
-                        y: { 
-                            beginAtZero: true,
-                            grace: '10%',
-                            ticks: { 
-                                stepSize: 1,
-                                font: { weight: 'bold' }
-                            }
-                        },
-                        x: {
-                            ticks: { font: { weight: 'bold' } }
-                        }
+                        y: { beginAtZero: true, grace: '10%', ticks: { stepSize: 1, font: { weight: 'bold' } } },
+                        x: { ticks: { font: { weight: 'bold' } } }
                     }
                 }
             });
         }
 
+        // Render DataTables
         function renderTable(data) {
-            const tbody = document.getElementById('tableBody');
-            tbody.innerHTML = "";
-            if(data.length === 0) {
-                tbody.innerHTML = "<tr><td colspan='8' style='text-align:center;'>No data found</td></tr>";
-                return;
-            }
-            data.forEach(row => {
-                const tr = document.createElement('tr');
+            // Format array for DataTables format
+            const formattedData = data.map(row => {
                 let resultText = String(row['Dummy Test Result'] || '').trim().toUpperCase();
-                let resultClass = '';
-                if(resultText === 'FAIL') resultClass = 'fail';
-                if(resultText === 'PASS') resultClass = 'pass';
+                let resultHtml = resultText;
+                
+                // Add pretty colored labels for Pass/Fail
+                if(resultText === 'FAIL') resultHtml = `<span class="fail-cell">${resultText}</span>`;
+                if(resultText === 'PASS') resultHtml = `<span class="pass-cell">${resultText}</span>`;
 
-                tr.innerHTML = `
-                    <td>${row['Date'] || ''}</td>
-                    <td>${row['Stage name'] || ''}</td>
-                    <td>${row['Operator Name'] || ''}</td>
-                    <td>${row['Operator ID'] || ''}</td>
-                    <td>${row['problem Descrip'] || row['problem Description'] || row['Problem Description'] || ''}</td>
-                    <td>${row['Line no.'] || ''}</td>
-                    <td class="${resultClass}">${row['Dummy Test Result'] || ''}</td>
-                    <td>${row['Remarks'] || row['Remark'] || ''}</td>
-                `;
-                tbody.appendChild(tr);
+                return [
+                    row['Date'] || '',
+                    row['Stage name'] || '',
+                    row['Operator Name'] || '',
+                    row['Operator ID'] || '',
+                    row['problem Descrip'] || row['problem Description'] || row['Problem Description'] || '',
+                    row['Line no.'] || '',
+                    resultHtml,
+                    row['Remarks'] || row['Remark'] || ''
+                ];
             });
+
+            // Initialize or Reload DataTable
+            if (dataTable !== null) {
+                dataTable.clear();
+                dataTable.rows.add(formattedData);
+                dataTable.draw();
+            } else {
+                dataTable = $('#myDataTable').DataTable({
+                    data: formattedData,
+                    pageLength: 10,
+                    lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
+                    order: [[0, "desc"]], // Default sort by Date (Newest first)
+                    language: {
+                        search: "Search Table: "
+                    }
+                });
+            }
         }
     </script>
 </body>
