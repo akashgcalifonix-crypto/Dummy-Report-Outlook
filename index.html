@@ -13,6 +13,10 @@
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
     <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+
+    <!-- Select2 for Multi-Select Dropdowns -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     
     <style>
         /* Force ALL fonts to be Bold */
@@ -45,13 +49,20 @@
         label { display: block; margin-bottom: 5px; color: #333; font-size: 15px;}
         input, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 15px; color: #000; }
         
+        /* Select2 Multi-Select Styling */
+        .select2-container { width: 100% !important; }
+        .select2-container .select2-selection--multiple { border: 1px solid #ccc; border-radius: 4px; min-height: 42px; padding-bottom: 2px;}
+        .select2-container--default .select2-selection--multiple .select2-selection__choice { background-color: #1760c4; color: white; border: none; padding: 4px 8px; margin-top: 6px; font-size: 14px;}
+        .select2-container--default .select2-selection--multiple .select2-selection__choice__remove { color: white; margin-right: 8px; border-right: 1px solid rgba(255,255,255,0.3); padding-right: 5px;}
+        .select2-container--default .select2-selection--multiple .select2-selection__choice__remove:hover { color: #ffc7ce; background: none;}
+        
         /* Buttons */
         .add-row-btn { background: #20c997; color: white; border: none; padding: 12px; width: 100%; font-size: 18px; border-radius: 6px; cursor: pointer; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(32,201,151,0.3);}
         .submit-btn { width: 100%; background: #4CAF50; color: white; padding: 18px; border: none; font-size: 20px; border-radius: 6px; cursor: pointer; margin-top: 5px; box-shadow: 0 4px 6px rgba(76,175,80,0.3);}
         
         /* Dashboard Filters */
         .filters { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; background: white; padding: 15px; border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);}
-        .filter-item { flex: 1 1 140px; }
+        .filter-item { flex: 1 1 200px; } /* Widened to fit multi-selects better */
         
         /* Overall Metric Card */
         .metrics-container { display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 20px; }
@@ -106,7 +117,7 @@
         <div id="entry" class="tab-content active">
             <form id="dataForm">
                 
-                <!-- GLOBAL SETTINGS (Applied to all rows) -->
+                <!-- GLOBAL SETTINGS (Applies to all rows) -->
                 <div class="global-settings">
                     <h3>General Details (Applies to all entries below)</h3>
                     <div class="form-group">
@@ -190,10 +201,11 @@
                     <label>To Date</label>
                     <input type="date" id="toDate" onchange="applyFilters()">
                 </div>
+                
+                <!-- MULTI-SELECT FILTERS -->
                 <div class="filter-item">
-                    <label>Line</label>
-                    <select id="filterLine" onchange="applyFilters()">
-                        <option value="ALL">All Lines</option>
+                    <label>Lines (Leave blank for ALL)</label>
+                    <select id="filterLine" multiple="multiple">
                         <option value="B01">B01</option>
                         <option value="B02">B02</option>
                         <option value="B03">B03</option>
@@ -205,9 +217,8 @@
                     </select>
                 </div>
                 <div class="filter-item">
-                    <label>Stage</label>
-                    <select id="filterStage" onchange="applyFilters()">
-                        <option value="ALL">All Stages</option>
+                    <label>Stages (Leave blank for ALL)</label>
+                    <select id="filterStage" multiple="multiple">
                         <option value="FT">FT</option>
                         <option value="CT">CT</option>
                         <option value="BT">BT</option>
@@ -281,9 +292,16 @@
 
         Chart.register(ChartDataLabels);
 
-        document.getElementById('globalDate').valueAsDate = new Date();
-        document.getElementById('fromDate').valueAsDate = new Date();
-        document.getElementById('toDate').valueAsDate = new Date();
+        // Initialize Select2 & Dates on Page Load
+        $(document).ready(function() {
+            document.getElementById('globalDate').valueAsDate = new Date();
+            document.getElementById('fromDate').valueAsDate = new Date();
+            document.getElementById('toDate').valueAsDate = new Date();
+
+            // Initialize Multi-Selects
+            $('#filterLine').select2({ placeholder: "Select Lines..." }).on('change', applyFilters);
+            $('#filterStage').select2({ placeholder: "Select Stages..." }).on('change', applyFilters);
+        });
 
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
@@ -296,47 +314,33 @@
             }
         }
 
-        // --- NEW: Add Dynamic Row Logic ---
+        // Add Dynamic Row Logic
         function addNewRow() {
             rowCount++;
             const container = document.getElementById('entriesContainer');
             const rows = container.querySelectorAll('.entry-card');
             const lastRow = rows[rows.length - 1];
             
-            // Clone the last row
             const newRow = lastRow.cloneNode(true);
             newRow.id = `row-${rowCount}`;
-            
-            // Update the title
             newRow.querySelector('.row-title').innerText = `Entry ${rowCount}`;
             
-            // Add Remove Button if it doesn't exist
             if (!newRow.querySelector('.remove-btn')) {
                 const removeBtn = document.createElement('button');
                 removeBtn.type = 'button';
                 removeBtn.className = 'remove-btn';
                 removeBtn.innerText = 'X Remove';
-                removeBtn.onclick = function() { 
-                    this.parentElement.remove(); 
-                    updateRowTitles(); 
-                };
+                removeBtn.onclick = function() { this.parentElement.remove(); updateRowTitles(); };
                 newRow.insertBefore(removeBtn, newRow.firstChild);
             } else {
-                // Ensure the cloned remove button works
-                newRow.querySelector('.remove-btn').onclick = function() { 
-                    this.parentElement.remove(); 
-                    updateRowTitles(); 
-                };
+                newRow.querySelector('.remove-btn').onclick = function() { this.parentElement.remove(); updateRowTitles(); };
             }
             
-            // Reset specific fields for the new entry, but keep Stage & Operator Name to save time
             newRow.querySelector('.inp-remark').value = '';
             newRow.querySelector('.inp-result').value = 'Pass';
-            
             container.appendChild(newRow);
         }
 
-        // Re-number rows if one is deleted from the middle
         function updateRowTitles() {
             const rows = document.querySelectorAll('.entry-card');
             rowCount = rows.length;
@@ -345,7 +349,7 @@
             });
         }
 
-        // --- NEW: Multiple Submission Logic ---
+        // Form Submission
         document.getElementById('dataForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             if(SCRIPT_URL === "PASTE_YOUR_COPIED_WEB_APP_URL_HERE") {
@@ -363,7 +367,6 @@
             btn.disabled = true;
 
             try {
-                // Loop through every single row and send it to Google
                 for(let i = 0; i < totalRows; i++) {
                     const row = rows[i];
                     btn.innerText = `Saving Entry ${i + 1} of ${totalRows}...`;
@@ -383,14 +386,12 @@
 
                 alert(`✅ Successfully saved ${totalRows} entr${totalRows > 1 ? 'ies' : 'y'}!`);
                 
-                // Reset the form: Remove all rows except the first one
                 const container = document.getElementById('entriesContainer');
                 while(container.children.length > 1) {
                     container.removeChild(container.lastChild);
                 }
                 rowCount = 1;
                 
-                // Clear the first row's remarks
                 const firstRow = document.querySelector('.entry-card');
                 firstRow.querySelector('.inp-remark').value = "";
                 firstRow.querySelector('.inp-result').value = "Pass";
@@ -407,7 +408,6 @@
             }
         });
 
-        // Dashboard Data Loading
         function loadDashboardData() {
             if(SCRIPT_URL === "PASTE_YOUR_COPIED_WEB_APP_URL_HERE") return;
 
@@ -444,22 +444,33 @@
             });
         }
 
-        // Apply filters
+        // Apply Multi-Select Filters
         function applyFilters() {
             const fromDate = document.getElementById('fromDate').value;
             const toDate = document.getElementById('toDate').value;
-            const lineFilter = document.getElementById('filterLine').value;
-            const stageFilter = document.getElementById('filterStage').value;
+            
+            // Get arrays of selected values from Select2
+            const selectedLines = $('#filterLine').val() || [];
+            const selectedStages = $('#filterStage').val() || [];
 
             const filteredData = allData.filter(row => {
                 let match = true;
+                
+                // Date Filter
                 if (row['Date']) {
                     if (fromDate && row['Date'] < fromDate) match = false;
                     if (toDate && row['Date'] > toDate) match = false;
                 } else if (fromDate || toDate) { match = false; }
 
-                if (lineFilter !== 'ALL' && row['Line no.'] !== lineFilter) match = false;
-                if (stageFilter !== 'ALL' && row['Stage name'] !== stageFilter) match = false;
+                // Multi-Line Filter: If array is NOT empty, check if row matches one of them
+                if (selectedLines.length > 0 && !selectedLines.includes(row['Line no.'])) {
+                    match = false;
+                }
+                
+                // Multi-Stage Filter
+                if (selectedStages.length > 0 && !selectedStages.includes(row['Stage name'])) {
+                    match = false;
+                }
                 
                 return match;
             });
@@ -478,6 +489,7 @@
                 let resultText = String(row['Dummy Test Result'] || '').trim().toUpperCase();
                 let stageText = String(row['Stage name'] || '').trim().toUpperCase();
                 let lineText = String(row['Line no.'] || '').trim().toUpperCase();
+                
                 let isFail = (resultText === 'FAIL');
                 let isPass = (resultText === 'PASS');
 
@@ -563,7 +575,6 @@
             });
         }
 
-        // Render DataTables
         function renderTable(data) {
             const formattedData = data.map(row => {
                 let resultText = String(row['Dummy Test Result'] || '').trim().toUpperCase();
