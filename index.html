@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Production Dummy Test Dashboard</title>
+    <!-- Include Chart.js for the graph -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; margin: 0; padding: 0; }
         
@@ -28,18 +30,30 @@
         .filters { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; background: white; padding: 15px; border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);}
         .filter-item { flex: 1 1 140px; }
         
-        /* Management Cards */
+        /* Overall Metric Card */
         .metrics-container { display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 20px; }
-        .metric-card { flex: 1 1 200px; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); text-align: center; border-top: 5px solid #1760c4; }
-        .metric-card.alert-card { border-top: 5px solid #d9534f; }
-        .metric-card h3 { margin: 0 0 10px 0; font-size: 15px; color: #555; text-transform: uppercase; border-bottom: 1px solid #eee; padding-bottom: 8px;}
-        .metric-card p { margin: 5px 0; font-size: 15px; font-weight: bold; color: #333;}
+        .metric-card { flex: 1 1 100%; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); text-align: center; border-top: 5px solid #1760c4; }
+        .metric-card h3 { margin: 0 0 10px 0; font-size: 18px; color: #555; text-transform: uppercase; border-bottom: 1px solid #eee; padding-bottom: 8px;}
+        
+        .overall-stats { display: flex; justify-content: space-around; flex-wrap: wrap; gap: 10px;}
+        .overall-stats div p { margin: 5px 0; font-size: 16px; font-weight: bold; color: #333;}
+        
+        /* Dynamic Stage Cards */
+        .section-title { font-size: 16px; color: #555; margin-bottom: 10px; border-bottom: 2px solid #ccc; padding-bottom: 5px; text-transform: uppercase;}
+        .stage-metrics { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 25px;}
+        .stage-card { flex: 1 1 120px; background: white; padding: 10px; border-radius: 5px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); text-align: center; border-left: 4px solid #e67e22;}
+        .stage-card h4 { margin: 0 0 8px 0; font-size: 15px; color: #333;}
+        .stage-card p { margin: 3px 0; font-size: 13px; font-weight: bold;}
+
+        /* Chart Container */
+        .chart-wrapper { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px; height: 300px;}
+
         .text-pass { color: #28a745; }
         .text-fail { color: #d9534f; }
-        .text-rate { color: #e67e22; font-size: 18px !important; }
+        .text-rate { color: #e67e22; font-size: 16px !important; }
 
         /* Table */
-        .table-responsive { overflow-x: auto; background: white; border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); max-height: 500px; overflow-y: auto;}
+        .table-responsive { overflow-x: auto; background: white; border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); max-height: 400px; overflow-y: auto;}
         table { width: 100%; border-collapse: collapse; white-space: nowrap; font-size: 13px;}
         th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #ddd; }
         th { background-color: #9cb4d4; color: black; position: sticky; top: 0; z-index: 10;}
@@ -102,6 +116,10 @@
                         <option value="B02">B02</option>
                         <option value="B03">B03</option>
                         <option value="B04">B04</option>
+                        <option value="B05">B05</option>
+                        <option value="B06">B06</option>
+                        <option value="B07">B07</option>
+                        <option value="B08">B08</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -139,6 +157,10 @@
                         <option value="B02">B02</option>
                         <option value="B03">B03</option>
                         <option value="B04">B04</option>
+                        <option value="B05">B05</option>
+                        <option value="B06">B06</option>
+                        <option value="B07">B07</option>
+                        <option value="B08">B08</option>
                     </select>
                 </div>
                 <div class="filter-item">
@@ -155,21 +177,33 @@
                 </div>
             </div>
 
-            <!-- MANAGEMENT METRICS -->
-            <div class="metrics-container" id="metricsContainer" style="display: none;">
-                <div class="metric-card">
-                    <h3>Overall Dummy Status</h3>
-                    <p>Total Tests: <span id="m-total">0</span></p>
-                    <p class="text-pass">Pass: <span id="m-pass">0</span></p>
-                    <p class="text-fail">Fail: <span id="m-fail">0</span></p>
-                    <p class="text-rate">Fail Rate: <span id="m-failrate">0.0%</span></p>
+            <!-- MANAGEMENT METRICS & CHART -->
+            <div id="dashboardContent" style="display: none;">
+                
+                <div class="metrics-container">
+                    <div class="metric-card">
+                        <h3>Overall Dummy Status</h3>
+                        <div class="overall-stats">
+                            <div><p>Total Tests</p><p id="m-total">0</p></div>
+                            <div><p class="text-pass">Pass</p><p id="m-pass" class="text-pass">0</p></div>
+                            <div><p class="text-fail">Fail</p><p id="m-fail" class="text-fail">0</p></div>
+                            <div><p class="text-rate">Overall Fail Rate</p><p id="m-failrate" class="text-rate">0.0%</p></div>
+                        </div>
+                    </div>
                 </div>
-                <div class="metric-card alert-card">
-                    <h3>FT Stage Analysis</h3>
-                    <p>FT Total Tests: <span id="m-ft-total">0</span></p>
-                    <p class="text-fail">FT Failures: <span id="m-ft-fail">0</span></p>
-                    <p class="text-rate">FT Fail Rate: <span id="m-ft-failrate">0.0%</span></p>
+
+                <!-- Dynamic Stage Stats -->
+                <h3 class="section-title">All Stages Fail Rate</h3>
+                <div class="stage-metrics" id="stageMetricsContainer">
+                    <!-- Cards will be injected here -->
                 </div>
+
+                <!-- Line Wise Chart -->
+                <h3 class="section-title">Line-Wise Failures</h3>
+                <div class="chart-wrapper">
+                    <canvas id="lineFailChart"></canvas>
+                </div>
+
             </div>
 
             <button onclick="loadDashboardData()" style="padding:12px; background:#333; color:white; border:none; border-radius:4px; margin-bottom:15px; cursor:pointer; font-weight:bold; width:100%;">🔄 Fetch / Refresh Data</button>
@@ -206,6 +240,7 @@
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbygVSe2u-q65y81iSXaecIAiar2xm_5xNh1rCLawfkX_wmIjMEz5k6-FgaETf28hbOYxw/exec"; 
         
         let allData = [];
+        let myChart = null; // Variable to hold the chart instance
 
         // Set default dates to Today
         document.getElementById('date').valueAsDate = new Date();
@@ -225,12 +260,10 @@
 
         document.getElementById('dataForm').addEventListener('submit', function(e) {
             e.preventDefault();
-            
             if(SCRIPT_URL === "PASTE_YOUR_COPIED_WEB_APP_URL_HERE") {
                 alert("Error: You forgot to paste your Google Script URL into the code!");
                 return;
             }
-
             const btn = document.getElementById('submitBtn');
             btn.innerText = "Saving Data...";
             btn.style.backgroundColor = "#888";
@@ -263,7 +296,7 @@
             if(SCRIPT_URL === "PASTE_YOUR_COPIED_WEB_APP_URL_HERE") return;
 
             document.getElementById('loader').style.display = "block";
-            document.getElementById('metricsContainer').style.display = "none";
+            document.getElementById('dashboardContent').style.display = "none";
             document.getElementById('tableBody').innerHTML = "";
 
             fetch(SCRIPT_URL)
@@ -274,8 +307,6 @@
                     for (let key in oldRow) {
                         let cleanKey = key.trim(); 
                         let value = oldRow[key];
-                        
-                        // Force Date Formatting
                         if (cleanKey.toLowerCase() === 'date' && value) {
                             let d = new Date(value);
                             if (!isNaN(d)) {
@@ -289,10 +320,9 @@
                     }
                     return newRow;
                 });
-                
                 applyFilters(); 
                 document.getElementById('loader').style.display = "none";
-                document.getElementById('metricsContainer').style.display = "flex";
+                document.getElementById('dashboardContent').style.display = "block";
             })
             .catch(err => {
                 document.getElementById('loader').innerText = "Error loading data. Check internet connection.";
@@ -307,14 +337,10 @@
 
             const filteredData = allData.filter(row => {
                 let match = true;
-                
-                // Date Range Logic
                 if (row['Date']) {
                     if (fromDate && row['Date'] < fromDate) match = false;
                     if (toDate && row['Date'] > toDate) match = false;
-                } else if (fromDate || toDate) {
-                    match = false; // Exclude empty dates if a filter is on
-                }
+                } else if (fromDate || toDate) { match = false; }
 
                 if (lineFilter !== 'ALL' && row['Line no.'] !== lineFilter) match = false;
                 if (stageFilter !== 'ALL' && row['Stage name'] !== stageFilter) match = false;
@@ -329,49 +355,124 @@
         function calculateMetrics(data) {
             let total = data.length;
             let pass = 0, fail = 0;
-            let ftTotal = 0, ftFail = 0;
+            
+            let stageStats = {};
+            let lineFails = {}; // For the chart
 
             data.forEach(row => {
-                let isFail = (row['Dummy Test Result'] === 'Fail' || row['Dummy Test Result'] === 'FAIL');
-                let isPass = (row['Dummy Test Result'] === 'Pass' || row['Dummy Test Result'] === 'PASS');
-                let isFT = (row['Stage name'] === 'FT');
+                let resultText = String(row['Dummy Test Result'] || '').trim().toUpperCase();
+                let stageText = String(row['Stage name'] || '').trim().toUpperCase();
+                let lineText = String(row['Line no.'] || '').trim().toUpperCase();
 
+                let isFail = (resultText === 'FAIL');
+                let isPass = (resultText === 'PASS');
+
+                // Overall calculations
                 if (isPass) pass++;
                 if (isFail) fail++;
 
-                if (isFT) {
-                    ftTotal++;
-                    if (isFail) ftFail++;
+                // Stage-wise calculations
+                if (stageText !== '') {
+                    if (!stageStats[stageText]) stageStats[stageText] = { total: 0, fail: 0 };
+                    stageStats[stageText].total++;
+                    if (isFail) stageStats[stageText].fail++;
+                }
+
+                // Line-wise calculation (Fails only)
+                if (lineText !== '' && isFail) {
+                    if (!lineFails[lineText]) lineFails[lineText] = 0;
+                    lineFails[lineText]++;
                 }
             });
 
+            // Update Overall Text
             let overallFailRate = total > 0 ? ((fail / total) * 100).toFixed(1) : 0.0;
-            let ftFailRate = ftTotal > 0 ? ((ftFail / ftTotal) * 100).toFixed(1) : 0.0;
-
             document.getElementById('m-total').innerText = total;
             document.getElementById('m-pass').innerText = pass;
             document.getElementById('m-fail').innerText = fail;
             document.getElementById('m-failrate').innerText = overallFailRate + '%';
 
-            document.getElementById('m-ft-total').innerText = ftTotal;
-            document.getElementById('m-ft-fail').innerText = ftFail;
-            document.getElementById('m-ft-failrate').innerText = ftFailRate + '%';
+            // Generate Stage Cards Dynamically
+            let stageContainer = document.getElementById('stageMetricsContainer');
+            stageContainer.innerHTML = ''; 
+
+            if (Object.keys(stageStats).length === 0) {
+                stageContainer.innerHTML = '<p style="color:#777; width:100%; text-align:center;">No stage data available for this filter.</p>';
+            } else {
+                for (let stage in stageStats) {
+                    let sTotal = stageStats[stage].total;
+                    let sFail = stageStats[stage].fail;
+                    let sRate = sTotal > 0 ? ((sFail / sTotal) * 100).toFixed(1) : 0.0;
+                    
+                    stageContainer.innerHTML += `
+                        <div class="stage-card">
+                            <h4>${stage}</h4>
+                            <p>Total: ${sTotal}</p>
+                            <p class="text-fail">Fails: ${sFail}</p>
+                            <p class="text-rate">${sRate}%</p>
+                        </div>
+                    `;
+                }
+            }
+
+            // Render Chart
+            renderChart(lineFails);
+        }
+
+        function renderChart(lineFails) {
+            // Sort lines alphabetically (B01, B02, etc.)
+            let labels = Object.keys(lineFails).sort(); 
+            let chartData = labels.map(label => lineFails[label]);
+
+            const ctx = document.getElementById('lineFailChart').getContext('2d');
+            
+            // Destroy existing chart to prevent hover glitches when changing filters
+            if (myChart != null) {
+                myChart.destroy();
+            }
+
+            myChart = new Chart(ctx, {
+                type: 'bar', // Bar chart is best for category comparison
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Total Fails per Line',
+                        data: chartData,
+                        backgroundColor: 'rgba(217, 83, 79, 0.7)', // red
+                        borderColor: 'rgba(217, 83, 79, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false } // Hide legend since title is clear
+                    },
+                    scales: {
+                        y: { 
+                            beginAtZero: true, 
+                            ticks: { stepSize: 1 } // Only show whole numbers (you can't have 1.5 fails)
+                        }
+                    }
+                }
+            });
         }
 
         function renderTable(data) {
             const tbody = document.getElementById('tableBody');
             tbody.innerHTML = "";
-
             if(data.length === 0) {
-                tbody.innerHTML = "<tr><td colspan='8' style='text-align:center;'>No data found for this date range/filter</td></tr>";
+                tbody.innerHTML = "<tr><td colspan='8' style='text-align:center;'>No data found</td></tr>";
                 return;
             }
-
             data.forEach(row => {
                 const tr = document.createElement('tr');
-                const resultClass = (row['Dummy Test Result'] === 'Fail' || row['Dummy Test Result'] === 'FAIL') ? 'fail' : 'pass';
+                let resultText = String(row['Dummy Test Result'] || '').trim().toUpperCase();
+                let resultClass = '';
+                if(resultText === 'FAIL') resultClass = 'fail';
+                if(resultText === 'PASS') resultClass = 'pass';
 
-                // Fixed the exact case for 'problem Descrip'
                 tr.innerHTML = `
                     <td>${row['Date'] || ''}</td>
                     <td>${row['Stage name'] || ''}</td>
