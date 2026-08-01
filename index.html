@@ -86,6 +86,13 @@
         <!-- DATA ENTRY TAB -->
         <div id="entry" class="tab-content active">
             <form id="dataForm">
+                
+                <!-- NEW BULK ENTRY FIELD -->
+                <div class="form-group" style="background: #e9ecef; padding: 10px; border-radius: 5px; border-left: 5px solid #1760c4;">
+                    <label style="color: #1760c4;">Number of Entries (Qty)</label>
+                    <input type="number" id="qty" name="qty" value="1" min="1" max="50" required>
+                </div>
+
                 <div class="form-group">
                     <label>Date</label>
                     <input type="date" id="date" name="date" required>
@@ -130,14 +137,14 @@
                 </div>
                 <div class="form-group">
                     <label>Dummy Test Result</label>
-                    <select name="testResult" required>
+                    <select name="testResult" id="testResult" required>
                         <option value="Pass">Pass</option>
                         <option value="Fail">Fail</option>
                     </select>
                 </div>
                 <div class="form-group">
                     <label>Remarks</label>
-                    <input type="text" name="remark">
+                    <input type="text" name="remark" id="remark">
                 </div>
                 <button type="submit" class="submit-btn" id="submitBtn">Submit Data</button>
             </form>
@@ -267,38 +274,54 @@
             }
         }
 
-        document.getElementById('dataForm').addEventListener('submit', function(e) {
+        // ==========================================
+        // UPDATED SUBMISSION LOGIC (BULK ENTRY LOOP)
+        // ==========================================
+        document.getElementById('dataForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             if(SCRIPT_URL === "PASTE_YOUR_COPIED_WEB_APP_URL_HERE") {
                 alert("Error: You forgot to paste your Google Script URL into the code!");
                 return;
             }
+            
             const btn = document.getElementById('submitBtn');
-            btn.innerText = "Saving Data...";
+            const qtyInput = document.getElementById('qty');
+            let qty = parseInt(qtyInput.value);
+            
+            // Safety check
+            if(isNaN(qty) || qty < 1) qty = 1;
+
             btn.style.backgroundColor = "#888";
             btn.disabled = true;
 
             const formData = new FormData(this);
             const data = new URLSearchParams(formData);
 
-            fetch(SCRIPT_URL, { method: 'POST', body: data })
-            .then(res => res.json())
-            .then(response => {
-                alert("✅ Data Saved Successfully!");
-                this.reset();
-                document.getElementById('date').valueAsDate = new Date();
+            try {
+                // Loop and send data multiple times if Quantity > 1
+                for(let i = 0; i < qty; i++) {
+                    btn.innerText = `Saving Entry ${i + 1} of ${qty}...`;
+                    await fetch(SCRIPT_URL, { method: 'POST', body: data });
+                }
+
+                alert(`✅ Successfully saved ${qty} entr${qty > 1 ? 'ies' : 'y'}!`);
+                
+                // SMART RESET: Do NOT wipe Date, Stage, Line, Operator. 
+                // Only wipe Remarks, Result, and reset Qty back to 1.
+                qtyInput.value = 1;
+                document.getElementById('remark').value = "";
+                document.getElementById('testResult').value = "Pass";
+                
                 btn.innerText = "Submit Data";
                 btn.style.backgroundColor = "#4CAF50";
                 btn.disabled = false;
-            })
-            .catch(error => {
-                alert("✅ Data submitted! (Check your Google Sheet to confirm).");
-                this.reset();
-                document.getElementById('date').valueAsDate = new Date();
+
+            } catch (error) {
+                alert("⚠️ Error connecting to server. Please try again.");
                 btn.innerText = "Submit Data";
                 btn.style.backgroundColor = "#4CAF50";
                 btn.disabled = false;
-            });
+            }
         });
 
         function loadDashboardData() {
@@ -450,24 +473,22 @@
                     maintainAspectRatio: false,
                     plugins: {
                         legend: { display: false },
-                        // Data labels Configuration
                         datalabels: {
                             anchor: 'end',
                             align: 'top',
-                            color: '#d9534f', // Red matching the bars
+                            color: '#d9534f',
                             font: {
                                 weight: 'bold',
                                 size: 14
                             },
                             formatter: function(value) {
-                                return value > 0 ? value : ''; // Only show labels if value > 0
+                                return value > 0 ? value : '';
                             }
                         }
                     },
                     scales: {
                         y: { 
                             beginAtZero: true,
-                            // Adding a little extra padding at the top so labels don't get cut off
                             grace: '10%',
                             ticks: { 
                                 stepSize: 1,
